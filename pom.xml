@@ -135,18 +135,6 @@
     </repositories>
     <profiles>
         <profile>
-          <id>default</id>
-          <activation>
-            <activeByDefault/>
-          </activation>
-
-          <modules>
-            <module>warpunit-examples</module>
-            <module>warpunit-insider-template-war</module>
-          </modules>
-
-        </profile>
-        <profile>
             <id>csp</id>
             <properties>
                 <hap-repository.url/>
