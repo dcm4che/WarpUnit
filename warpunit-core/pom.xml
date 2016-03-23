@@ -48,7 +48,7 @@
   <name>WarpUnit core - combines client and server side components</name>
   <dependencies>
 
-    <!-- JaxRS client -->
+    <!-- JaxRS client/server -->
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-client</artifactId>
@@ -60,7 +60,7 @@
       <scope>compile</scope>
     </dependency>
 
-    <!-- JaxRS Server-side -->
+    <!-- For server-side tools -->
     <dependency>
       <groupId>javax.enterprise</groupId>
       <artifactId>cdi-api</artifactId>
