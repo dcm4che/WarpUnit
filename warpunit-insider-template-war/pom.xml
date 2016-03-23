@@ -1,0 +1,44 @@
+<project
+        xmlns="http://maven.apache.org/POM/4.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.dcm4che</groupId>
+    <artifactId>warpunit-parent</artifactId>
+    <version>alpha-SNAPSHOT</version>
+  </parent>
+  <artifactId>warpunit-insider-template-war</artifactId>
+  <packaging>war</packaging>
+  <description>
+    This is a sample war that needs to be deployed on the server (e.g. as part of the *.ear under test).
+    This war should include all kind of dependencies needed by the test classes that will be warp'd.
+  </description>
+  <dependencies>
+    <dependency>
+      <groupId>org.dcm4che</groupId>
+      <artifactId>warpunit-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- override scope for jaxrs client to make sure those jars don't end up in the war-->
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-client</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jackson-provider</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- allow using Asserts on the server side-->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>compile</scope>
+    </dependency>
+
+  </dependencies>
+</project>
