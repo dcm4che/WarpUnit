@@ -66,7 +66,8 @@ This way you can test your application *as is* i.e. with no need for mocking, an
 
 To be able to execute warpunit tests against a server, you need to include a special `warpunit-insider.war` into your \*.ear under test. You can do it, e.g., with a maven profile to make sure that this war is only included into you application for the purpose of testing. **Make sure it never ends up in production, or you are risking to have a backdoor for arbitrary code execution in you app**.  
 
-You will find this complete example in warpunit-examples/greeter.
+You will find this complete example in [warpunit-examples/greeter](https://github.com/dcm4che/WarpUnit/tree/master/warpunit-examples/greeter)
+.
 
 #### Current status/limitations
 
