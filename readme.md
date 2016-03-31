@@ -5,7 +5,7 @@ WarpUnit is a lightweight framework for gray-box integration testing of server s
 
 It allows to use simple JUnit to make tests where some parts of the code are executed on an application server directly inside your Java EE application archive. First, this approach allows to avoid extensive mocking, and second, it reduces the risk of missing some deployment aspects while testing.
 
-### Example
+## Example
 
 Let's say we have a service with the following interface in our application   
 
@@ -68,7 +68,7 @@ To be able to execute warpunit tests against a server, you need to include a spe
 
 You will find this complete example in [warpunit-examples/greeter](https://github.com/dcm4che/WarpUnit/tree/master/warpunit-examples/greeter)
 
-### 2 flavours
+## 2 flavours
 
 There are 2 'flavours' of syntax that essentially do the same under the hood:  
 
@@ -131,7 +131,7 @@ public class GreeterInsiderImpl implements GreeterInsider {
 }
 ```
 
-### Current status/limitations
+## Current status/limitations
 
 - Tested with Jboss/Wildfly app servers
 - Supports java 8
@@ -139,7 +139,7 @@ public class GreeterInsiderImpl implements GreeterInsider {
 - Anonymous classes are not allowed. 
 - Inner classes (but not inner-of-inner) allowed.
   
-### How it works in a nutshell
+## How it works in a nutshell
 
 Whenever you warp something from the client code, the following happens:
   
