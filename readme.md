@@ -66,7 +66,7 @@ So, what happens here?
 
 This way you can test your application *as is* i.e. with no need for mocking, and at the same time test against low-level interfaces/fine-grain services that are not normally exposed.
 
-To be able to execute warpunit tests against a server, you need to include a special `warpunit-insider.war` into the deployment (i.e. an *.ear) under test (you can do it e.g. with a maven profile to make sure that this war is only included into you application for the purpose of testing). **Make sure it never ends up in production, or you are risking to have a backdoor for arbitrary code execution in you app.**  
+To be able to execute warpunit tests against a server, you need to include a special `warpunit-insider.war` into your \*.ear under test. You can do it, e.g., with a maven profile to make sure that this war is only included into you application for the purpose of testing. **Make sure it never ends up in production, or you are risking to have a backdoor for arbitrary code execution in you app**.  
 
 You will find this complete example in warpunit-examples/greeter.
 
