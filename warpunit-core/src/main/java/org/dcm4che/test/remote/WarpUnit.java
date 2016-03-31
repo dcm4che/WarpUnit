@@ -55,6 +55,7 @@ import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -63,9 +64,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.function.Supplier;
 
-
+/**
+ * @author rawmahn
+ */
 public class WarpUnit {
-
 
     public static String DEFAULT_REMOTE_ENDPOINT_URL = makeURL("localhost", "8080");
 
@@ -90,111 +92,55 @@ public class WarpUnit {
     }
 
     /**
-     * Creates a proxy of type <code>insiderInterface</code> that will do the following when one of its methods is called:
-     * <ul>
-     * <li>Collect all the bytecodes of the <code>insiderClass</code> itself and any inner classes</li>
-     * <li>Send them to the server, along with the info of which method has been called</li>
-     * <li>On the server,  inside the main EAR of the archive:<ul>
-     * <p/>
-     * <li>Feed the received bytecodes to a classloader</li>
-     * <li>Create a bean of class <code>insiderClass</code></li>
-     * <li>Run CDI injection upon this bean</li>
-     * <li>Execute the method, which the user called on the proxy, upon the newly created bean on the server</li>
-     * <li>Serialize the response, respond with it to the caller</li>
-     * </ul></li>
-     * <li> Return the received response as a return value of the proxy/
-     * throw an exception that was thrown during execution of the class method
-     * </li>
-     * <p/>
-     * </ul>
-     *
-     * @param insiderInterface An interface that is used to create a proxy. It should contain the method that you would like to run on the server.
-     * @param insiderClass     A class that will be executed on the server. The implementation can use any injections/resources that are available for the classes in the EAR.
-     *                         The class must not reference any other classes that are not expected to be accessible in the deployment already.
-     *                         Anonymous classes are not allowed for now.
-     *                         Inner classes (1 lvl) are allowed.
-     * @param warpInterface
-     * @param url
-     * @return A proxy that allows to execute <code>insiderClass</code>'s methods on the server
+     * Use this builder to create a warp gate.
      */
-    public static <T> T warp(final Class<T> insiderInterface, final Class<? extends T> insiderClass, final boolean warpInterface, final String url) {
-
-        Object o = Proxy.newProxyInstance(insiderInterface.getClassLoader(), new Class[]{insiderInterface}, new InvocationHandler() {
-            @Override
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-
-                Class[] classes;
-                if (warpInterface) {
-                    classes = new Class[]{insiderClass, insiderInterface};
-                } else {
-                    classes = new Class[]{insiderClass};
-                }
-
-                return warpAndRun(method.getName(), args, classes, url);
-            }
-        });
-
-        return (T) o;
+    public static GateBuilder builder() {
+        return new GateBuilder();
     }
 
     /**
-     * @param classes classes to warp. The [0]th class is considered primary - i.e. the once whose method will be called
+     * Use {@link #builder} instead
      */
-    private static Object warpAndRun(String methodName, Object[] args, Class[] classes, String url) throws RemoteExecutionException {
-        RemoteRequestJSON requestJSON = new RemoteRequestJSON();
-
-        requestJSON.methodName = methodName;
-        requestJSON.primaryClassName = classes[0].getName();
-        requestJSON.args = Base64.toBase64(DeSerializer.serialize(args));
-        requestJSON.classes = new HashMap<String, String>();
-
-
-        for (Class aClass : classes) {
-
-            String insiderClassResourceName = getClassResourceName(aClass);
-            URL insiderClassResource = aClass.getResource(insiderClassResourceName);
-            requestJSON.classes.put(aClass.getName(), Base64.toBase64(getBytes(insiderClassResource)));
-
-            // inner classes
-            for (Class<?> innerClass : aClass.getDeclaredClasses()) {
-
-                String[] splitClassName = innerClass.getName().split("\\.");
-                String classFileName = splitClassName[splitClassName.length - 1] + ".class";
-                URL resource = innerClass.getResource(classFileName);
-                requestJSON.classes.put(innerClass.getName(), Base64.toBase64(getBytes(resource)));
-            }
-        }
-
-        String base64resp = getRemoteEndpoint(url).warpAndRun(requestJSON);
-
-        Object returned;
-        try {
-            returned = DeSerializer.deserialize(Base64.fromBase64(base64resp));
-        } catch (IOException e) {
-            throw new RuntimeException("Error while deserializing the result of remotely executed code");
-        }
-
-
-        if (returned instanceof RemoteExecutionException)
-            throw (RemoteExecutionException) returned;
-
-        if (returned instanceof Exception)
-            throw new RemoteExecutionException("Unexpected error while running code remotely", (Throwable) returned);
-
-        return returned;
+    @Deprecated
+    public static <T> T warp(final Class<T> insiderInterface, final Class<? extends T> insiderClass, final boolean warpInterface, final String url) {
+        return makeProxyGate(insiderInterface, warpInterface, url, insiderClass);
     }
 
-
+    @Deprecated
+    /**
+     * Use {@link #builder} instead
+     */
     public static <T> T warp(final Class<T> insiderInterface, final Class<? extends T> insiderClass) {
-       return warp(insiderInterface, insiderClass, false, null);
+        return warp(insiderInterface, insiderClass, false, null);
     }
+
 
     public static WarpGate createGate(String url, Class ... classes) {
         return new WarpGate0(url, classes);
     }
 
+
     public static WarpGate createGate(Class ... classes) {
         return new WarpGate0(WarpUnit.DEFAULT_REMOTE_ENDPOINT_URL, classes);
+    }
+
+    static <T> T makeProxyGate(final Class<T> insiderInterface, final boolean warpInterface, final String url, final Class... classes) {
+
+        Class[] classesToSend;
+        if (warpInterface) {
+            classesToSend = Arrays.copyOf(classes, classes.length + 1);
+            classesToSend[classesToSend.length - 1] = insiderInterface;
+        } else {
+            classesToSend = classes;
+        }
+
+        Object proxy = Proxy.newProxyInstance(insiderInterface.getClassLoader(), new Class[]{insiderInterface}, new InvocationHandler() {
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                return warp(method.getName(), args, classesToSend, url);
+            }
+        });
+        return (T) proxy;
     }
 
     public static class WarpGate0 implements WarpGate {
@@ -208,28 +154,28 @@ public class WarpUnit {
         }
 
         @Override
-        public <R> R warp(Supplier<R> warpable) {
-            return WarpUnit.warp(warpable, classes, url);
+        public <R> R warp(Supplier<R> lambda) {
+            return WarpUnit.warp(lambda, classes, url);
         }
 
         @Override
-        public void warp(Runnable warpable) {
-            WarpUnit.warp(warpable, classes, url);
+        public void warp(Runnable lambda) {
+            WarpUnit.warp(lambda, classes, url);
         }
 
         @Override
-        public <R> Future<R> warpAsync(Supplier<R> warpable) {
-            return warpAndMakeFuture(warpable);
+        public <R> Future<R> warpAsync(Supplier<R> lambda) {
+            return warpAndMakeFuture(lambda);
         }
 
         @Override
-        public Future<Void> warpAsync(Runnable warpable) {
-            return warpAndMakeFuture(warpable);
+        public Future<Void> warpAsync(Runnable lambda) {
+            return warpAndMakeFuture(lambda);
         }
 
         @Override
-        public Object warpAndRun(String methodName, Object[] args) {
-            return WarpUnit.warpAndRun(methodName, args, classes, url);
+        public Object warp(String methodName, Object[] args) {
+            return WarpUnit.warp(methodName, args, classes, url);
         }
 
         private <R> Future<R> warpAndMakeFuture(Object warpable) {
@@ -241,29 +187,32 @@ public class WarpUnit {
 
     };
 
-    public static class WarpGateMockRunsLocally implements WarpGate {
+    /**
+     * Not sure if useful, will keep for now
+     */
+    private static class WarpGateMockRunsLocally implements WarpGate {
 
         @Override
-        public <R> R warp(Supplier<R> warpable) {
-            return warpable.get();
+        public <R> R warp(Supplier<R> lambda) {
+            return lambda.get();
         }
 
         @Override
-        public void warp(Runnable warpable) {
-            warpable.run();
+        public void warp(Runnable lambda) {
+            lambda.run();
         }
 
         @Override
-        public <R> Future<R> warpAsync(Supplier<R> warpable) {
-            FutureTask<R> futureTask = new FutureTask<>(() -> warpable.get());
+        public <R> Future<R> warpAsync(Supplier<R> lambda) {
+            FutureTask<R> futureTask = new FutureTask<>(() -> lambda.get());
             getExecutor().execute(futureTask);
             return futureTask;
         }
 
         @Override
-        public Future<Void> warpAsync(Runnable warpable) {
+        public Future<Void> warpAsync(Runnable lambda) {
             FutureTask<Void> futureTask = new FutureTask<>(() -> {
-                warpable.run();
+                lambda.run();
                 return null;
             });
             getExecutor().execute(futureTask);
@@ -271,14 +220,13 @@ public class WarpUnit {
         }
 
         @Override
-        public Object warpAndRun(String methodName, Object[] args) {
+        public Object warp(String methodName, Object[] args) {
             throw new RuntimeException("not implemented");
         }
 
     }
 
-
-    public static <T> T warp(Object lambda, Class[] classes, String url) {
+    private static <T> T warp(Object lambda, Class[] classes, String url) {
 
         try {
             List<Object> args = new ArrayList<>();
@@ -309,10 +257,56 @@ public class WarpUnit {
             }
 
 
-            return (T) warpAndRun(methodRefInfo[1], args.toArray(), classes, url);
+            return (T) warp(methodRefInfo[1], args.toArray(), classes, url);
         } catch (Exception e) {
             throw new RuntimeException("Warp failed", e);
         }
+    }
+
+    /**
+     * @param classes classes to warp. The [0]th class is considered primary - i.e. the once whose method will be called
+     */
+    private static Object warp(String methodName, Object[] args, Class[] classes, String url) throws RemoteExecutionException {
+        RemoteRequestJSON requestJSON = new RemoteRequestJSON();
+
+        requestJSON.methodName = methodName;
+        requestJSON.primaryClassName = classes[0].getName();
+        requestJSON.args = Base64.toBase64(DeSerializer.serialize(args));
+        requestJSON.classes = new HashMap<>();
+
+
+        for (Class aClass : classes) {
+
+            String insiderClassResourceName = getClassResourceName(aClass);
+            URL insiderClassResource = aClass.getResource(insiderClassResourceName);
+            requestJSON.classes.put(aClass.getName(), Base64.toBase64(getBytes(insiderClassResource)));
+
+            // inner classes
+            for (Class<?> innerClass : aClass.getDeclaredClasses()) {
+
+                String[] splitClassName = innerClass.getName().split("\\.");
+                String classFileName = splitClassName[splitClassName.length - 1] + ".class";
+                URL resource = innerClass.getResource(classFileName);
+                requestJSON.classes.put(innerClass.getName(), Base64.toBase64(getBytes(resource)));
+            }
+        }
+
+        String base64resp = getRemoteEndpoint(url).warpAndRun(requestJSON);
+
+        Object returned;
+        try {
+            returned = DeSerializer.deserialize(Base64.fromBase64(base64resp));
+        } catch (IOException e) {
+            throw new RuntimeException("Error while deserializing the result of remotely executed code");
+        }
+
+        if (returned instanceof RemoteExecutionException)
+            throw (RemoteExecutionException) returned;
+
+        if (returned instanceof Exception)
+            throw new RemoteExecutionException("Unexpected error while running code remotely", (Throwable) returned);
+
+        return returned;
     }
 
 

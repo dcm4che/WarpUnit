@@ -55,7 +55,6 @@
     </licenses>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dcm4che.version>3.3.8-SNAPSHOT</dcm4che.version>
     </properties>
   <modules>
     <module>warpunit-core</module>

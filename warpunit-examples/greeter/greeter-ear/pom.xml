@@ -1,0 +1,57 @@
+<project
+        xmlns="http://maven.apache.org/POM/4.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.dcm4che.examples</groupId>
+    <artifactId>greeter-parent</artifactId>
+    <version>alpha-SNAPSHOT</version>
+  </parent>
+  <artifactId>greeter-ear</artifactId>
+  <packaging>ear</packaging>
+
+  <dependencies>
+
+    <!-- our services -->
+    <dependency>
+      <groupId>org.dcm4che.examples</groupId>
+      <artifactId>greeter</artifactId>
+      <version>alpha-SNAPSHOT</version>
+    </dependency>
+
+    <!--
+    Warpunit insider war. You can make your own such war that would include other testing dependencies, e.g. additional testing frameworks that you want to use in your tests
+    This should be deployed ONLY FOR TESTING
+    E.g., you can make a maven profile to include it
+    -->
+    <dependency>
+      <groupId>org.dcm4che</groupId>
+      <artifactId>warpunit-insider-template-war</artifactId>
+      <version>${project.version}</version>
+      <type>war</type>
+    </dependency>
+
+
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-ear-plugin</artifactId>
+        <configuration>
+          <defaultLibBundleDir>lib</defaultLibBundleDir>
+          <modules>
+
+            <webModule>
+              <groupId>org.dcm4che</groupId>
+              <artifactId>warpunit-insider-template-war</artifactId>
+              <contextRoot>warpunit-insider</contextRoot>
+            </webModule>
+
+          </modules>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

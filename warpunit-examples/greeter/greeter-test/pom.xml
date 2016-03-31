@@ -1,0 +1,46 @@
+<project
+        xmlns="http://maven.apache.org/POM/4.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.dcm4che.examples</groupId>
+    <artifactId>greeter-parent</artifactId>
+    <version>alpha-SNAPSHOT</version>
+  </parent>
+  <artifactId>greeter-test</artifactId>
+  <dependencies>
+
+    <!-- we use simple junit for our tests-->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- we need to see our business interfaces in our tests -->
+    <dependency>
+      <groupId>org.dcm4che.examples</groupId>
+      <artifactId>greeter</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- warpunit dependency -->
+    <dependency>
+      <groupId>org.dcm4che</groupId>
+      <artifactId>warpunit-core</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- the tests have to know CDI annotations like @Inject-->
+    <dependency>
+      <groupId>javax.enterprise</groupId>
+      <artifactId>cdi-api</artifactId>
+      <version>1.0</version>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+</project>

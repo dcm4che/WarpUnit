@@ -60,6 +60,6 @@ public interface WarpUnitInsiderREST {
      */
 
     @POST
-    @Path("/warpAndRun")
+    @Path("/warp")
     String warpAndRun(RemoteRequestJSON requestJSON);
 }
