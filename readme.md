@@ -67,9 +67,71 @@ This way you can test your application *as is* i.e. with no need for mocking, an
 To be able to execute warpunit tests against a server, you need to include a special `warpunit-insider.war` into your \*.ear under test. You can do it, e.g., with a maven profile to make sure that this war is only included into you application for the purpose of testing. **Make sure it never ends up in production, or you are risking to have a backdoor for arbitrary code execution in you app**.  
 
 You will find this complete example in [warpunit-examples/greeter](https://github.com/dcm4che/WarpUnit/tree/master/warpunit-examples/greeter)
-.
 
-#### Current status/limitations
+### 2 flavours
+
+There are 2 'flavours' of syntax that essentially do the same under the hood:  
+
+#### Lambda-style 
+
+Lambda-style is more concise/flexible. Useful when your test code tends to perform many "small" warps.  
+
+``` java
+
+@Inject
+Greeter greeter;
+
+...
+
+WarpGate gate = WarpUnit.builder()
+        .primaryClass(LambdaStyleGreeterTest.class)
+        .createGate();
+
+String greetingForBob = gate.warp(() -> {
+    System.out.println("This is printed in the server log");
+    return greeter.greet("Bob");
+});
+``` 
+
+
+#### Proxy-style
+
+Proxy style is more keystrokes and looks more complex, but is useful when you want to extract a "layer" of warp'able coarse-grain code parts, and have a clear separation of client/server test code.      
+
+``` java
+GreeterInsider proxyGate = WarpUnit.builder()
+        .primaryClass(GreeterInsiderImpl.class)
+        .includeInterface(true)
+        .createProxyGate(GreeterInsider.class);
+
+System.out.println("This is printed in the JUnit test log");
+
+String greetingForBob = proxyGate.getAGreeting("Bob");
+
+Assert.assertEquals("Greetings, Bob !", greetingForBob);
+```
+
+``` java
+public interface GreeterInsider {
+    String getAGreeting(String forWhom);
+}
+```
+
+``` java
+public class GreeterInsiderImpl implements GreeterInsider {
+
+    @Inject
+    Greeter greeter;
+
+    @Override
+    public String getAGreeting(String forWhom) {
+        System.out.println("This is printed in the server log");
+        return greeter.greet(forWhom);
+    }
+}
+```
+
+### Current status/limitations
 
 - Tested with Jboss/Wildfly app servers
 - Supports java 8
@@ -77,7 +139,7 @@ You will find this complete example in [warpunit-examples/greeter](https://githu
 - Anonymous classes are not allowed. 
 - Inner classes (but not inner-of-inner) allowed.
   
-#### How it works in a nutshell
+### How it works in a nutshell
 
 Whenever you warp something from the client code, the following happens:
   
