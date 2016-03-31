@@ -1,11 +1,9 @@
 WarpUnit
 --------
 
-WarpUnit is a lightweight framework for gray-box integration testing of server side Java EE applications.
+WarpUnit is a lightweight framework for gray-box integration testing of server side Java EE applications. 
 
-It allows to use simple JUnit to make tests where some parts of the code are executed on an application server directly inside your Java EE application archive. 
-
-First, this approach allows to avoid extensive mocking, and second, it reduces the risk of missing some deployment aspects while testing.
+It allows to use simple JUnit to make tests where some parts of the code are executed on an application server directly inside your Java EE application archive. First, this approach allows to avoid extensive mocking, and second, it reduces the risk of missing some deployment aspects while testing.
 
 ### Example
 
