@@ -88,7 +88,6 @@ WarpGate gate = WarpUnit.builder()
         .createGate();
 
 String greetingForBob = gate.warp(() -> {
-    System.out.println("This is printed in the server log");
     return greeter.greet("Bob");
 });
 ``` 
@@ -104,11 +103,8 @@ GreeterInsider proxyGate = WarpUnit.builder()
         .includeInterface(true)
         .createProxyGate(GreeterInsider.class);
 
-System.out.println("This is printed in the JUnit test log");
-
 String greetingForBob = proxyGate.getAGreeting("Bob");
 
-Assert.assertEquals("Greetings, Bob !", greetingForBob);
 ```
 
 ``` java
