@@ -40,7 +40,12 @@
 package org.dcm4che.test.remote.serverside;
 
 import org.dcm4che.test.remote.Base64;
-import org.dcm4che.test.remote.*;
+import org.dcm4che.test.remote.DeSerializer;
+import org.dcm4che.test.remote.RemoteExecutionException;
+import org.dcm4che.test.remote.RemoteRequestJSON;
+import org.dcm4che.test.remote.WarpUnitInsiderREST;
+import org.jboss.weld.bean.builtin.BeanManagerProxy;
+import org.jboss.weld.resources.ClassTransformer;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedType;
@@ -50,7 +55,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -89,7 +98,13 @@ public class WarpUnitInsider implements WarpUnitInsiderREST {
 
             // cdi magic
             CreationalContext creationalContext = beanManager.createCreationalContext(null);
-            AnnotatedType annotatedType = beanManager.createAnnotatedType(object.getClass());
+            AnnotatedType annotatedType;
+            synchronized ( WarpUnitInsider.class )
+            {
+                // Avoid re-using Classes from previous warps
+                ((BeanManagerProxy)beanManager).getServices().get(ClassTransformer.class).cleanup();
+                annotatedType = beanManager.createAnnotatedType(object.getClass());
+            }
             beanManager
                     .createInjectionTarget(annotatedType)
                     .inject(object, creationalContext);
