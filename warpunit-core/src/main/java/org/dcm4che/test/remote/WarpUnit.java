@@ -56,6 +56,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -271,7 +272,7 @@ public class WarpUnit {
 
         requestJSON.methodName = methodName;
         requestJSON.primaryClassName = classes[0].getName();
-        requestJSON.args = Base64.toBase64(DeSerializer.serialize(args));
+        requestJSON.args = Base64.getEncoder().encodeToString(DeSerializer.serialize(args));
         requestJSON.classes = new HashMap<>();
 
 
@@ -279,7 +280,7 @@ public class WarpUnit {
 
             String insiderClassResourceName = getClassResourceName(aClass);
             URL insiderClassResource = aClass.getResource(insiderClassResourceName);
-            requestJSON.classes.put(aClass.getName(), Base64.toBase64(getBytes(insiderClassResource)));
+            requestJSON.classes.put(aClass.getName(), Base64.getEncoder().encodeToString(getBytes(insiderClassResource)));
 
             // inner classes
             for (Class<?> innerClass : aClass.getDeclaredClasses()) {
@@ -287,18 +288,14 @@ public class WarpUnit {
                 String[] splitClassName = innerClass.getName().split("\\.");
                 String classFileName = splitClassName[splitClassName.length - 1] + ".class";
                 URL resource = innerClass.getResource(classFileName);
-                requestJSON.classes.put(innerClass.getName(), Base64.toBase64(getBytes(resource)));
+                requestJSON.classes.put(innerClass.getName(), Base64.getEncoder().encodeToString(getBytes(resource)));
             }
         }
 
         String base64resp = getRemoteEndpoint(url).warpAndRun(requestJSON);
 
         Object returned;
-        try {
-            returned = DeSerializer.deserialize(Base64.fromBase64(base64resp));
-        } catch (IOException e) {
-            throw new RuntimeException("Error while deserializing the result of remotely executed code");
-        }
+            returned = DeSerializer.deserialize(Base64.getDecoder().decode(base64resp));
 
         if (returned instanceof RemoteExecutionException)
             throw (RemoteExecutionException) returned;
