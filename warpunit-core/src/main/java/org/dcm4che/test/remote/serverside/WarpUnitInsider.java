@@ -39,7 +39,6 @@
 
 package org.dcm4che.test.remote.serverside;
 
-import org.dcm4che.test.remote.Base64;
 import org.dcm4che.test.remote.DeSerializer;
 import org.dcm4che.test.remote.RemoteExecutionException;
 import org.dcm4che.test.remote.RemoteRequestJSON;
@@ -57,6 +56,7 @@ import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,11 +77,7 @@ public class WarpUnitInsider implements WarpUnitInsiderREST {
         // unbase64 the bytecode
         Map<String, byte[]> classNameToByteCode = new HashMap<>();
         for (Map.Entry<String, String> nameToBase64Entry : requestJSON.classes.entrySet()) {
-            try {
-                classNameToByteCode.put(nameToBase64Entry.getKey(), Base64.fromBase64(nameToBase64Entry.getValue()));
-            } catch (IOException e) {
-                throw new RuntimeException("base64 issue", e);
-            }
+            classNameToByteCode.put(nameToBase64Entry.getKey(), Base64.getDecoder().decode(nameToBase64Entry.getValue()));
         }
 
         // prepare classloader
@@ -127,7 +123,7 @@ public class WarpUnitInsider implements WarpUnitInsiderREST {
                     // make sure we can do lambdas
                     method.setAccessible(true);
 
-                    result = method.invoke(object, (Object[]) DeSerializer.deserialize(Base64.fromBase64(requestJSON.args)));
+                    result = method.invoke(object, (Object[]) DeSerializer.deserialize(Base64.getDecoder().decode(requestJSON.args)));
                 } catch (Exception e) {
                     // send the exception back to the caller - it will recognize it and rethrow on it's side
 
@@ -145,7 +141,7 @@ public class WarpUnitInsider implements WarpUnitInsiderREST {
 
         if (!foundMethod) result = new RuntimeException("method " + requestJSON.methodName + " not found");
 
-        return Base64.toBase64(DeSerializer.serialize(result));
+        return Base64.getEncoder().encodeToString(DeSerializer.serialize(result));
 
     }
 
